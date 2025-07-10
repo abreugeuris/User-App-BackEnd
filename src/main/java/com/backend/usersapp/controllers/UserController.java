@@ -3,11 +3,17 @@ package com.backend.usersapp.controllers;
 import com.backend.usersapp.models.entities.User;
 import com.backend.usersapp.services.UserService;
 import jakarta.validation.Valid;
+
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -21,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
+
+    Logger logger = LoggerFactory.getLogger(UserController.class);
 
 
     private final UserService userService;
@@ -36,16 +44,20 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
+    public ResponseEntity<User> findById(@PathVariable Long id)  {
+        Optional<User> userOptional = Optional.empty();
+        try {
+            userOptional  = userService.findById(id);
 
-        Optional<User> userOptional = userService.findById(id);
-
+        }catch (SQLException e) {
+            logger.error(e.getMessage());
+        }
         return userOptional.isPresent() ? ResponseEntity.ok(userOptional.orElseThrow())
                 : ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<?> Create(@Valid @RequestBody User user, BindingResult result) {
+    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result) {
         if (result.hasErrors()) {
             return  validation(result);
         }
@@ -63,7 +75,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> remove(@PathVariable Long id) {
+    public ResponseEntity<String> remove(@PathVariable Long id) {
 
         String message = "Usuario eliminado de manera exitosa";
         HttpStatus status ;
@@ -80,8 +92,11 @@ public class UserController {
     }
     
     @GetMapping("/available")
-    public ResponseEntity<?> isAvailableUsername(@RequestParam String username){      
-        return new ResponseEntity<> ( userService.isAvailableUsername(username), HttpStatus.OK);
+    public ResponseEntity<Boolean> isNotAvailableUsernameOrEmail(@RequestParam String name, @RequestParam String value ){
+
+            return new ResponseEntity<> ( userService.isNotAvailableUsernameOrEmail(name,value), HttpStatus.OK);
+
+
     }
     
 
@@ -95,6 +110,12 @@ public class UserController {
         });
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+
+    }
+
+    @GetMapping("/api/auth/")
+    public ResponseEntity<String> helloWord() {
+        return new ResponseEntity<>("Hello World", HttpStatus.OK);
 
     }
 }
