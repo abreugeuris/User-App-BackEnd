@@ -1,21 +1,23 @@
 
 package com.backend.usersapp.services;
 
+import java.sql.SQLException;
 import java.util.List;
-import com.backend.usersapp.models.entities.User;
-import java.util.Optional;
+
+import com.backend.usersapp.models.dto.UserAppDto;
+import com.backend.usersapp.models.entities.UserApp;
 
 /**
  *
  * @author Geuris-Abreu-PC
  */
 
-public interface UserService {
+public interface UserService  {
     
-    List<User> findAll();
-    Optional<User> findById(Long id);
-    User save(User user);
-    User update(Long id, User user);
-    void remove(Long id) throws Exception;  
-    Boolean isAvailableUsername(String username);
+    List<UserAppDto> findAll();
+    UserAppDto findById(Long id) throws SQLException;
+    UserAppDto save(UserApp userApp);
+    UserAppDto update(Long id, UserApp userApp);
+    void remove(Long id) throws SQLException;
+    Boolean isNotAvailableUsernameOrEmail(String name, String value);
 }

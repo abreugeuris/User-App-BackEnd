@@ -1,0 +1,16 @@
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\auth\filters\JwtAuthenticationFilter.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\auth\filters\JwtValidationFilter.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\auth\TokenJwtConfig.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\config\SecurityConfig.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\controllers\UserController.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\models\dto\UserAppDto.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\models\entities\Role.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\models\entities\UserApp.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\repositories\RoleRepository.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\repositories\UserRepository.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\services\JpaUserDetailsService.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\services\RoleService.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\services\RoleServiceImpl.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\services\UserService.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\services\UserServiceImpl.java
+C:\Cursos\React-springBoot-Udemy\SpringBoot\Proyects\User-App-BackEnd\src\main\java\com\backend\usersapp\UsersAppApplication.java

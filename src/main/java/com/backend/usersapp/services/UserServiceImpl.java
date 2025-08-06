@@ -1,86 +1,201 @@
 package com.backend.usersapp.services;
 
-import com.backend.usersapp.models.entities.User;
+import com.backend.usersapp.models.dto.UserAppDto;
+import com.backend.usersapp.models.entities.Role;
+import com.backend.usersapp.models.entities.UserApp;
+
+import java.util.*;
+
 import com.backend.usersapp.repositories.UserRepository;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.service.spi.ServiceException;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- *
  * @author Geuris-Abreu-PC
  */
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final Logger logger = LogManager.getLogger(UserServiceImpl.class);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        List<User> usersList = (List<User>) userRepository.findAll();
-        return usersList.stream().sorted(Comparator.comparingLong(User::getId)).
-                collect(Collectors.toList());
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
+
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleService roleService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.roleService = roleService;
 
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public List<UserAppDto> findAll() {
+        List<UserAppDto> users = new ArrayList<>();
+        try {
+
+            List<UserApp> usersList = (List<UserApp>) userRepository.findAll();
+
+            usersList.forEach(user -> users.add(
+                    UserAppDto.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .admin(user.getRoles().stream().anyMatch(r -> r.getName().equals(Role.ROLE_ADMIN)))
+                            .email(user.getEmail())
+                            .build()
+            ));
+            users.sort(Comparator.comparing(UserAppDto::getId));
+
+            return users;
+        } catch (Exception e) {
+            logger.error("call method : findAll  errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserAppDto findById(Long id) {
+        UserAppDto userAppDto;
+        try {
+            Optional<UserApp> o = getUserById(id);
+            userAppDto = UserAppDto.builder()
+                    .id(o.get().getId())
+                    .username(o.get().getUsername())
+                    .admin(o.get().isAdmin())
+                    .email(o.get().getEmail())
+                    .build();
+
+
+        } catch (ServiceException e) {
+            logger.error("call method : findById  errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
+            throw new ServiceException(e.getMessage());
+        }
+        return userAppDto;
+
     }
 
     @Override
     @Transactional
-    public User save(User user) {
-        return userRepository.save(user);
-    }
+    public UserAppDto save(UserApp userRequest) {
 
-    @Override
-    @Transactional
-    public User update(Long id, User userRequest) {
-        Optional<User> optionalUser = this.findById(id);
+        try {
+            UserApp userApp = new UserApp();
+            String passwordHashed = passwordEncoder.encode(userRequest.getPassword());
 
-        if (optionalUser.isPresent()) {
-            User userDb = optionalUser.orElseThrow();
+            userApp.setUsername(userRequest.getUsername());
+            userApp.setEmail(userRequest.getEmail());
+            userApp.setPassword(passwordHashed);
+            userApp.setRoles(getRoles(userRequest));
 
-            userDb.setUsername(userRequest.getUsername());
-            userDb.setEmail(userRequest.getEmail());
+            return saveOrUpdateUse(userApp);
 
-            if (Objects.nonNull(userRequest.getPassword()) && !userRequest.getPassword().equals("noting")) {
-                userDb.setPassword(userRequest.getPassword());
-            }
 
-            return this.save(userDb);
+        } catch (Exception e) {
+            logger.error("call method : save errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
         }
         return null;
+
     }
 
     @Override
     @Transactional
-    public void remove(Long id) throws Exception {
-        Optional<User> o = userRepository.findById(id);
-        if (o.isPresent()) {
-            userRepository.deleteById(id);
-        } else {
-            String message = String.format("EL usuario con el %d no existe.", id);
-            throw new Exception(message);
+    public UserAppDto update(Long id, UserApp userRequest) {
+
+
+//        try {
+        Optional<UserApp> optionalUser = getUserById(id);
+        UserApp userAppDb = optionalUser.orElseThrow();
+
+        userAppDb.setAdmin(userAppDb.getRoles().stream()
+                .anyMatch(role -> role.getName().equals(Role.ROLE_ADMIN)));
+
+        validationsFieldsChanges(userRequest, userAppDb);
+
+        return saveOrUpdateUse(userAppDb);
+
+//        } catch (Exception e) {
+//            logger.error("call method : update errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
+//        }
+
+//        return null;
+    }
+
+    @Override
+    @Transactional
+    public void remove(Long id) {
+
+        try {
+            getUserById(id).ifPresent(userRepository::delete);
+        } catch (ServiceException e) {
+            throw new ServiceException(e.getMessage());
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Boolean isAvailableUsername(String username) {
-        
-        Optional<User> user =userRepository.findByUsername(username);
-        return user.isPresent();
+    public Boolean isNotAvailableUsernameOrEmail(String name, String value) {
+        switch (name) {
+            case "username" -> {
+                return userRepository.findByUsername(value).isPresent();
+            }
+
+            case "email" -> {
+                return userRepository.findByEmail(value).isPresent();
+            }
+            default -> {
+                return false;
+            }
+        }
 
     }
 
+    private Optional<UserApp> getUserById(Long id) {
+        Optional<UserApp> o = userRepository.findById(id);
+        if (o.isEmpty()) {
+            String message = String.format("EL usuario con el %d no existe.", id);
+            throw new ServiceException(message);
+        }
+        return o;
+    }
+
+    private Set<Role> getRoles(UserApp userRequest) {
+        if (userRequest.isAdmin()) {
+            return new HashSet<>(roleService.findAll());
+        }
+        Role role = roleService.findByName(Role.ROLE_USER);
+        return new HashSet<>(Set.of(role));
+    }
+
+
+    private void validationsFieldsChanges(UserApp userRequest, UserApp userFromDb) {
+        if (Objects.nonNull(userFromDb) && Objects.nonNull(userRequest)) {
+            if (!userRequest.getUsername().equals(userFromDb.getUsername())) {
+                userFromDb.setUsername(userRequest.getUsername());
+            } else if (!userRequest.getEmail().equalsIgnoreCase(userFromDb.getEmail())) {
+                userFromDb.setEmail(userRequest.getEmail());
+            } else if (userRequest.isAdmin() != userFromDb.isAdmin()) {
+                userFromDb.getRoles().clear();
+                userFromDb.setRoles(getRoles(userRequest));
+            }
+
+        }
+    }
+
+    private UserAppDto saveOrUpdateUse(UserApp userAppDb) {
+        UserApp user = userRepository.save(userAppDb);
+        return UserAppDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .admin(user.isAdmin())
+                .build();
+    }
 }
