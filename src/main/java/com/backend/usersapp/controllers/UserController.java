@@ -5,7 +5,6 @@ import com.backend.usersapp.models.entities.UserApp;
 import com.backend.usersapp.services.UserService;
 import jakarta.validation.Valid;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create( @Valid @RequestBody UserApp userApp, BindingResult result) {
+    public ResponseEntity<?> create(@Valid @RequestBody UserApp userApp, BindingResult result) {
         if (result.hasErrors()) {
             return validation(result);
         }
