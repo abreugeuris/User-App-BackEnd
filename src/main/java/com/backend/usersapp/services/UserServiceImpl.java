@@ -10,7 +10,6 @@ import com.backend.usersapp.repositories.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.service.spi.ServiceException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,15 +62,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserAppDto findById(Long id) {
-        UserAppDto userAppDto;
+        UserAppDto userAppDto = null;
         try {
             Optional<UserApp> o = getUserById(id);
-            userAppDto = UserAppDto.builder()
-                    .id(o.get().getId())
-                    .username(o.get().getUsername())
-                    .admin(o.get().isAdmin())
-                    .email(o.get().getEmail())
-                    .build();
+            if (o.isPresent()) {
+                userAppDto = UserAppDto.builder()
+                        .id(o.get().getId())
+                        .username(o.get().getUsername())
+                        .admin(o.get().isAdmin())
+                        .email(o.get().getEmail())
+                        .build();
+            }
 
 
         } catch (ServiceException e) {
@@ -109,8 +110,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserAppDto update(Long id, UserApp userRequest) {
 
-
-//        try {
         Optional<UserApp> optionalUser = getUserById(id);
         UserApp userAppDb = optionalUser.orElseThrow();
 
@@ -121,11 +120,6 @@ public class UserServiceImpl implements UserService {
 
         return saveOrUpdateUse(userAppDb);
 
-//        } catch (Exception e) {
-//            logger.error("call method : update errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
-//        }
-
-//        return null;
     }
 
     @Override

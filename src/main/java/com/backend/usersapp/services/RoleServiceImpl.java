@@ -4,7 +4,6 @@ import com.backend.usersapp.models.entities.Role;
 import com.backend.usersapp.repositories.RoleRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

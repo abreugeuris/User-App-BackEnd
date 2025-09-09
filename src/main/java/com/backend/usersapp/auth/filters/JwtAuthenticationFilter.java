@@ -53,7 +53,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             logger.info("Attempting to authenticate user: " + username);
         } catch (IOException e) {
-            //throw new RuntimeException(e);
             logger.error("Failed to parse request body {}", e);
         }
 
@@ -63,7 +62,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
 
         String username = ((User) authResult.getPrincipal()).getUsername();
 

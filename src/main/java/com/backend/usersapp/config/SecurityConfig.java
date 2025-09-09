@@ -71,8 +71,6 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/users/{id}").hasAnyRole(ADMIN_USER, COSTUMER_USER)
                                 .requestMatchers(HttpMethod.POST, "/users").hasAnyRole(ADMIN_USER)
                                 .requestMatchers(HttpMethod.GET, "/users/available").hasAnyRole(ADMIN_USER)
-//                        .requestMatchers(HttpMethod.PUT, "/users/{id}").hasAnyRole("ADMIN")
-//                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasAnyRole("ADMIN")
                                 .requestMatchers("/users/**").hasAnyRole(ADMIN_USER)
                                 .anyRequest().authenticated()
                 )
@@ -91,11 +89,9 @@ public class SecurityConfig {
 
         origins.add("http://localhost:5173");
         origins.add("http://6-user-app-frontend.s3-website-us-east-1.amazonaws.com");
-//        origins.add("http://localhost:5173/users");
-//        origins.add("*");
+
 
         config.setAllowedOrigins(origins);
-//        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(methods);
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
