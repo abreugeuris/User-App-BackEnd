@@ -90,9 +90,12 @@ public class SecurityConfig {
         List<String> methods = httpMethodStream.map(HttpMethod::name).toList();
 
         origins.add("http://localhost:5173");
+        origins.add("http://6-user-app-frontend.s3-website-us-east-1.amazonaws.com");
 //        origins.add("http://localhost:5173/users");
+//        origins.add("*");
 
         config.setAllowedOrigins(origins);
+//        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(methods);
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
