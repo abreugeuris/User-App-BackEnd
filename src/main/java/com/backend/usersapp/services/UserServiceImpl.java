@@ -6,10 +6,14 @@ import com.backend.usersapp.models.entities.UserApp;
 
 import java.util.*;
 
+
 import com.backend.usersapp.repositories.UserRepository;
+import jakarta.annotation.Nonnull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.service.spi.ServiceException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,24 +43,14 @@ public class UserServiceImpl implements UserService {
     public List<UserAppDto> findAll() {
         List<UserAppDto> users = new ArrayList<>();
         try {
-
             List<UserApp> usersList = (List<UserApp>) userRepository.findAll();
-
-            usersList.forEach(user -> users.add(
-                    UserAppDto.builder()
-                            .id(user.getId())
-                            .username(user.getUsername())
-                            .admin(user.getRoles().stream().anyMatch(r -> r.getName().equals(Role.ROLE_ADMIN)))
-                            .email(user.getEmail())
-                            .build()
-            ));
+            usersList.forEach(user -> users.add(buildUserDtoFromUser(user)));
             users.sort(Comparator.comparing(UserAppDto::getId));
-
-            return users;
         } catch (Exception e) {
             logger.error("call method : findAll  errorMsg:{} , cause:{}", e.getMessage(), e.getCause());
             throw new ServiceException(e.getMessage());
         }
+        return users;
     }
 
     @Override
@@ -113,8 +107,7 @@ public class UserServiceImpl implements UserService {
         Optional<UserApp> optionalUser = getUserById(id);
         UserApp userAppDb = optionalUser.orElseThrow();
 
-        userAppDb.setAdmin(userAppDb.getRoles().stream()
-                .anyMatch(role -> role.getName().equals(Role.ROLE_ADMIN)));
+        userAppDb.setAdmin(userAppDb.getRoles().stream().anyMatch(role -> role.getName().equals(Role.ROLE_ADMIN)));
 
         validationsFieldsChanges(userRequest, userAppDb);
 
@@ -135,7 +128,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Boolean isNotAvailableUsernameOrEmail(String name, String value) {
+    public Boolean isNotAvailableUsernameOrEmail(@Nonnull String name, @Nonnull String value) {
         switch (name) {
             case "username" -> {
                 return userRepository.findByUsername(value).isPresent();
@@ -151,7 +144,17 @@ public class UserServiceImpl implements UserService {
 
     }
 
-    private Optional<UserApp> getUserById(Long id) {
+    @Transactional(readOnly = true)
+    public Page<UserAppDto> findAll(Pageable pageable) {
+        Page<UserAppDto> userAppDtoPage;
+        Page<UserApp> userApps = userRepository.findAll(pageable);
+        userAppDtoPage = userApps.map(this::buildUserDtoFromUser);
+        return userAppDtoPage;
+    }
+
+
+    @Nonnull
+    private Optional<UserApp> getUserById(@Nonnull Long id) {
         Optional<UserApp> o = userRepository.findById(id);
         if (o.isEmpty()) {
             String message = String.format("EL usuario con el %d no existe.", id);
@@ -160,7 +163,8 @@ public class UserServiceImpl implements UserService {
         return o;
     }
 
-    private Set<Role> getRoles(UserApp userRequest) {
+    @Nonnull
+    private Set<Role> getRoles(@Nonnull UserApp userRequest) {
         if (userRequest.isAdmin()) {
             return new HashSet<>(roleService.findAll());
         }
@@ -185,11 +189,11 @@ public class UserServiceImpl implements UserService {
 
     private UserAppDto saveOrUpdateUse(UserApp userAppDb) {
         UserApp user = userRepository.save(userAppDb);
-        return UserAppDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .admin(user.isAdmin())
-                .build();
+        return UserAppDto.builder().id(user.getId()).username(user.getUsername()).email(user.getEmail()).admin(user.isAdmin()).build();
     }
+
+    private UserAppDto buildUserDtoFromUser(UserApp user) {
+        return UserAppDto.builder().id(user.getId()).username(user.getUsername()).email(user.getEmail()).admin(user.getRoles().stream().anyMatch(r -> r.getName().equals(Role.ROLE_ADMIN))).build();
+    }
+
 }
